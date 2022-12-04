@@ -46,3 +46,9 @@ But I'm also happy that I now finally understand what these annotations really d
 The project may be a bit different than your standard application, but I tried my best to meet the requirements, while still keeping the demo clean and easily understandable.
 
 That's why I would score my project a 9/10.
+
+## Sources
+
+* [Android Room](https://developer.android.com/training/data-storage/room)
+* [Android SQLite](https://developer.android.com/training/data-storage/sqlite)
+* [Apache Velocity](https://velocity.apache.org/)
