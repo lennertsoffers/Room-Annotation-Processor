@@ -1,0 +1,36 @@
+package ${packageName};
+
+import android.provider.BaseColumns;
+import java.util.List;
+
+public final class Contract {
+    private Contract() {}
+
+    #foreach(${entityTable} in ${entityTables})
+    public static class ${entityTable.getEntityName()} implements BaseColumns {
+        public static final String TABLE_NAME = "${entityTable.getTableName()}";
+        #foreach(${EntityColumn} in ${entityTable.getColumns()})
+        public static final String ${EntityColumn.getUppercaseName()} = "${EntityColumn.getFieldName()}";
+        #end
+    }
+
+    #end
+    public static final List<String> SQL_CREATE_ENTRIES = List.of(
+            #foreach(${entityTable} in ${entityTables})
+            "CREATE TABLE ${entityTable.getTableName()} (" +
+            #foreach(${entityColumn} in ${entityTable.getColumns()})
+                "${entityColumn.getFieldName()} ${entityColumn.getSqlType()}#if(${entityColumn.isPrimaryKey()}) PRIMARY KEY AUTOINCREMENT#end#if($foreach.hasNext()),#end" +
+            #end
+            ");"#if($foreach.hasNext()),#end
+            #end
+    );
+
+    public static final List<String> SQL_DELETE_ENTRIES = List.of(
+        #foreach(${entityTable} in ${entityTables})
+        "DROP TABLE IF EXISTS ${entityTable.getTableName()};"#if($foreach.hasNext()),#end
+        #end
+    );
+}
+
+#* @vtlvariable name="entityTables" type="java.util.List<easypersistence_compiler.models.EntityTable>" *#
+#* @vtlvariable name="packageName" type="java.lang.String" *#

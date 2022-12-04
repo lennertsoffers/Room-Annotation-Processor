@@ -1,0 +1,109 @@
+package ${packageName};
+
+import ${entityTable.getFullName()};
+import ${packageName}.${contractName};
+import ${packageName}.BaseRepository;
+import android.content.ContentValues;
+import android.database.Cursor;
+import java.util.List;
+import java.util.ArrayList;
+import android.database.sqlite.SQLiteDatabase;
+
+#foreach(${column} in ${entityTable.getColumns()})
+    #if(${column.isPrimaryKey()})
+        #set($pkColumn = ${column})
+    #end
+#end
+public class ${repositoryName} extends BaseRepository<${entityTable.getEntityName()}, ${pkColumn.getJavaType()}> {
+    #set($variableName = ${stringUtils.toCamelCase(${entityTable.getEntityName()})})
+    #set($contractEntity = "${contractName}.${entityTable.getEntityName()}")
+    private String[] projection = {
+    #foreach(${column} in ${entityTable.getColumns()})
+        ${contractEntity}.${column.getUppercaseName()}#if($foreach.hasNext),#end
+    #end
+    };
+
+    public ${repositoryName}(SQLiteDatabase db) {
+        super(db);
+    }
+
+    public long insert(${entityTable.getEntityName()} ${variableName}) {
+        ContentValues values = new ContentValues();
+        #foreach(${column} in ${entityTable.getColumns()})
+        #if(!${column.isPrimaryKey()})
+        values.put(${contractEntity}.${column.getUppercaseName()}, ${variableName}.get${stringUtils.capitalize(${column.getJavaFieldName()})}());
+        #end
+        #end
+
+        return this.db.insert(${contractEntity}.TABLE_NAME, null, values);
+    }
+
+    public List<${entityTable.getEntityName()}> findAll() {
+        Cursor cursor = this.db.query(${contractEntity}.TABLE_NAME, this.projection, null, null, null, null, null);
+
+        #foreach(${column} in ${entityTable.getColumns()})
+        int ${stringUtils.upperToCamelCase(${column.getUppercaseName()})}ColumnIndex = cursor.getColumnIndex(${contractEntity}.${column.getUppercaseName()});
+        #end
+
+        List<${entityTable.getEntityName()}> entities = new ArrayList<>();
+        while (cursor.moveToNext()) {
+            ${entityTable.getEntityName()} ${variableName} = new ${entityTable.getEntityName()}();
+
+            #foreach(${column} in ${entityTable.getColumns()})
+            ${variableName}.set${stringUtils.capitalize(${column.getJavaFieldName()})}(cursor.get${column.getCursorType()}(${stringUtils.upperToCamelCase(${column.getUppercaseName()})}ColumnIndex));
+            #end
+
+            entities.add(${variableName});
+        }
+
+        return entities;
+    }
+
+    public ${entityTable.getEntityName()} findById(${pkColumn.getJavaType()} ${pkColumn.getJavaFieldName()}) {
+        String where = ${contractEntity}.${pkColumn.getUppercaseName()} + " = ?";
+        String[] whereArgs = {String.valueOf(${pkColumn.getJavaFieldName()})};
+
+        Cursor cursor = this.db.query(${contractEntity}.TABLE_NAME, this.projection, where, whereArgs, null, null, null);
+
+        #foreach(${column} in ${entityTable.getColumns()})
+        int ${stringUtils.upperToCamelCase(${column.getUppercaseName()})}ColumnIndex = cursor.getColumnIndex(${contractEntity}.${column.getUppercaseName()});
+        #end
+
+        cursor.moveToFirst();
+
+        ${entityTable.getEntityName()} ${variableName} = new ${entityTable.getEntityName()}();
+
+        #foreach(${column} in ${entityTable.getColumns()})
+        ${variableName}.set${stringUtils.capitalize(${column.getJavaFieldName()})}(cursor.get${column.getCursorType()}(${stringUtils.upperToCamelCase(${column.getUppercaseName()})}ColumnIndex));
+        #end
+
+        return ${variableName};
+    }
+
+    public boolean update(${entityTable.getEntityName()} ${variableName}) {
+        ContentValues values = new ContentValues();
+        #foreach(${column} in ${entityTable.getColumns()})
+        #if(!${column.isPrimaryKey()})
+        values.put(${contractEntity}.${column.getUppercaseName()}, ${variableName}.get${stringUtils.capitalize(${column.getJavaFieldName()})}());
+        #end
+        #end
+
+        String where = ${contractEntity}.${pkColumn.getUppercaseName()} + " = ?";
+        String[] whereArgs = {String.valueOf(${variableName}.get${stringUtils.capitalize(${pkColumn.getJavaFieldName()})}())};
+
+        return this.db.update(${contractEntity}.TABLE_NAME, values, where, whereArgs) > 0;
+    }
+
+    public boolean deleteById(${pkColumn.getJavaType()} ${pkColumn.getJavaFieldName()}) {
+        String where = ${contractEntity}.${pkColumn.getUppercaseName()} + " = ?";
+        String[] whereArgs = {String.valueOf(${pkColumn.getJavaFieldName()})};
+
+        return this.db.delete(${contractEntity}.TABLE_NAME, where, whereArgs) > 0;
+    }
+}
+
+#* @vtlvariable name="entityTable" type="easypersistence_compiler.models.EntityTable" *#
+#* @vtlvariable name="packageName" type="java.lang.String" *#
+#* @vtlvariable name="repositoryName" type="java.lang.String" *#
+#* @vtlvariable name="contractName" type="java.lang.String" *#
+#* @vtlvariable name="stringUtils" type="easypersistence_compiler.utils.StringUtils" *#

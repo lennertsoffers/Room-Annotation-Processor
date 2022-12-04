@@ -1,0 +1,24 @@
+package ${packageName};
+
+import android.database.sqlite.SQLiteDatabase;
+import java.util.List;
+
+public abstract class BaseRepository<T, K> {
+    protected SQLiteDatabase db;
+
+    public BaseRepository(SQLiteDatabase db) {
+        this.db = db;
+    }
+
+    public abstract long insert(T object);
+
+    public abstract List<T> findAll();
+
+    public abstract T findById(K id);
+
+    public abstract boolean update(T object);
+
+    public abstract boolean deleteById(K id);
+}
+
+#* @vtlvariable name="packageName" type="java.lang.String" *#

@@ -1,0 +1,51 @@
+package ${packageName};
+
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+#foreach(${entityTable} in ${entityTables})
+import ${entityTable.getFullName()};
+import ${packageName}.${entityTable.getEntityName()}${repositorySuffix};
+#end
+import ${packageName}.DatabaseHelper;
+
+public class EasyPersistenceDatabase {
+    private final DatabaseHelper databaseHelper;
+    private final SQLiteDatabase db;
+    #foreach(${entityTable} in ${entityTables})
+    #set($repositoryName = ${stringUtils.toCamelCase(${entityTable.getEntityName()})} + ${repositorySuffix})
+    #set($repositoryType = ${entityTable.getEntityName()} + ${repositorySuffix})
+    private final ${repositoryType} ${repositoryName};
+    #end
+
+    public EasyPersistenceDatabase(Context context) {
+        this.databaseHelper = new DatabaseHelper(context);
+        this.db = this.databaseHelper.getWritableDatabase();
+
+        #foreach(${entityTable} in ${entityTables})
+        #set($repositoryName = ${stringUtils.toCamelCase(${entityTable.getEntityName()})} + ${repositorySuffix})
+        this.${repositoryName} = new ${entityTable.getEntityName()}${repositorySuffix}(this.db);
+        #end
+    }
+
+    public void close() {
+        this.databaseHelper.close();
+    }
+
+    #foreach(${entityTable} in ${entityTables})
+    #set($repositoryName = ${stringUtils.toCamelCase(${entityTable.getEntityName()})} + ${repositorySuffix})
+    #set($repositoryType = ${entityTable.getEntityName()} + ${repositorySuffix})
+    public ${repositoryType} get${repositoryType}() {
+        return this.${repositoryName};
+    }
+
+    #end
+    public void upgrade() {
+        this.databaseHelper.onUpgrade(this.db, DatabaseHelper.DATABASE_VERSION, DatabaseHelper.DATABASE_VERSION + 1);
+    }
+}
+
+#* @vtlvariable name="entityTables" type="java.util.List<easypersistence_compiler.models.EntityTable>" *#
+#* @vtlvariable name="packageName" type="java.lang.String" *#
+#* @vtlvariable name="repositorySuffix" type="java.lang.String" *#
+#* @vtlvariable name="stringUtils" type="easypersistence_compiler.utils.StringUtils" *#
+
